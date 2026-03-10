@@ -1,0 +1,18 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# uploads
+backend/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat cache
+cache/
+artifacts/build-info/
