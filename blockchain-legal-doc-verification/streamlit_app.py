@@ -6,8 +6,14 @@ import pandas as pd
 from datetime import datetime
 import streamlit_authenticator as stauth
 from auth_config import credentials
+import os
+import qrcode
+from io import BytesIO
 
-st.set_page_config(page_title="Blockchain Document Verification", layout="wide")
+st.set_page_config(
+    page_title="TrustChain",
+    layout="wide"
+)
 
 API_URL = "http://127.0.0.1:5000"
 CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
@@ -19,7 +25,7 @@ CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 authenticator = stauth.Authenticate(
     credentials,
     "document_app_cookie",
-    "abcdef1234567890abcdef1234567890",  # >= 32 chars
+    "abcdef1234567890abcdef1234567890",
     cookie_expiry_days=1
 )
 
@@ -46,9 +52,73 @@ elif authentication_status:
 
     role = credentials["usernames"][username]["role"]
 
-    st.title("Blockchain Legal Document Verification System")
+    st.title("TrustChain")
+    st.subheader("Decentralized Legal Document Verification Using Blockchain and IPFS")
 
-    # Role-based navigation
+    # -----------------------------
+    # Blockchain Connection
+    # -----------------------------
+
+    w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+
+    contract_address = Web3.to_checksum_address(CONTRACT_ADDRESS)
+
+    abi_path = os.path.join(
+        "artifacts",
+        "contracts",
+        "DocumentVerification.sol",
+        "DocumentVerification.json"
+    )
+
+    if not os.path.exists(abi_path):
+        st.error("Contract not compiled. Run: npx hardhat compile")
+        st.stop()
+
+    with open(abi_path) as f:
+        abi = json.load(f)["abi"]
+
+    contract = w3.eth.contract(address=contract_address, abi=abi)
+
+    docs = contract.functions.getDocuments().call()
+
+    # -----------------------------
+    # DASHBOARD
+    # -----------------------------
+
+    st.markdown("## Dashboard")
+
+    total_docs = len(docs)
+
+    uploaders = set()
+    total_versions = 0
+
+    latest_upload = "N/A"
+
+    if total_docs > 0:
+        latest_upload = docs[-1][0]
+
+    for d in docs:
+        uploaders.add(d[4])
+        total_versions += d[5]
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    col1.metric("Total Documents", total_docs)
+    col2.metric("Total Uploaders", len(uploaders))
+    col3.metric("Total Versions", total_versions)
+    col4.metric(
+        "Blockchain Status",
+        "Connected" if w3.is_connected() else "Disconnected"
+    )
+
+    st.markdown("---")
+
+    st.info(f"Latest Upload: {latest_upload}")
+
+    # -----------------------------
+    # Navigation
+    # -----------------------------
+
     if role == "uploader":
         options = [
             "Upload Document",
@@ -64,7 +134,7 @@ elif authentication_status:
     option = st.sidebar.selectbox("Navigation", options)
 
     # -----------------------------------
-    # Upload Document (Uploader only)
+    # Upload Document
     # -----------------------------------
 
     if option == "Upload Document":
@@ -77,25 +147,49 @@ elif authentication_status:
 
             if st.button("Upload"):
 
-                response = requests.post(
-                    f"{API_URL}/upload",
-                    files={"file": file}
-                )
+                try:
 
-                data = response.json()
+                    response = requests.post(
+                        f"{API_URL}/upload",
+                        files={"file": file}
+                    )
 
-                st.success("Document stored successfully")
+                    data = response.json()
 
-                st.write("### Blockchain Details")
+                    st.success("Document stored successfully")
 
-                st.write("Document Hash:", data["hash"])
-                st.write("IPFS CID:", data["ipfs_cid"])
-                st.write("Version:", data["version"])
-                st.write("Transaction:", data["transaction"])
+                    st.write("### Blockchain Details")
 
-                st.markdown(
-                    f"[Open File from IPFS](http://127.0.0.1:8080/ipfs/{data['ipfs_cid']})"
-                )
+                    st.write("Document Hash:", data.get("hash"))
+                    st.write("IPFS CID:", data.get("ipfs_cid"))
+                    st.write("Version:", data.get("version"))
+                    st.write("Transaction:", data.get("transaction"))
+
+                    ipfs_link = f"http://127.0.0.1:8080/ipfs/{data.get('ipfs_cid')}"
+
+                    st.markdown(
+                        f"[Open File from IPFS]({ipfs_link})"
+                    )
+
+                    # -----------------------------
+                    # QR CODE GENERATION
+                    # -----------------------------
+
+                    st.write("### QR Code Verification")
+
+                    qr = qrcode.make(ipfs_link)
+
+                    buf = BytesIO()
+                    qr.save(buf)
+
+                    st.image(buf)
+
+                    st.caption(
+                        "Scan QR code to open document from decentralized IPFS storage"
+                    )
+
+                except Exception as e:
+                    st.error(f"Upload failed: {e}")
 
     # -----------------------------------
     # Verify Document
@@ -111,19 +205,29 @@ elif authentication_status:
 
             if st.button("Verify"):
 
-                response = requests.post(
-                    f"{API_URL}/verify",
-                    files={"file": file}
-                )
+                try:
 
-                result = response.json()
+                    response = requests.post(
+                        f"{API_URL}/verify",
+                        files={"file": file}
+                    )
 
-                if result["status"] == "verified":
-                    st.success("Document Verified - Integrity Intact")
-                else:
-                    st.error("Document Tampered - Not Found on Blockchain")
+                    result = response.json()
 
-                st.write(result)
+                    if result.get("status") == "verified":
+
+                        st.success("Document Verified - Integrity Intact")
+
+                        st.write("### Verification Details")
+
+                        st.write("IPFS CID:", result.get("ipfs_cid"))
+                        st.write("Version:", result.get("version"))
+
+                    else:
+                        st.error("Document Tampered or Not Found")
+
+                except Exception as e:
+                    st.error(f"Verification failed: {e}")
 
     # -----------------------------------
     # Blockchain Explorer
@@ -133,47 +237,43 @@ elif authentication_status:
 
         st.header("Blockchain Stored Documents")
 
-        w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+        try:
 
-        contract_address = Web3.to_checksum_address(CONTRACT_ADDRESS)
+            records = []
 
-        with open(
-            "../blockchain/artifacts/contracts/DocumentVerification.sol/DocumentVerification.json"
-        ) as f:
-            abi = json.load(f)["abi"]
+            for d in docs:
 
-        contract = w3.eth.contract(address=contract_address, abi=abi)
+                records.append({
+                    "File Name": d[0],
+                    "Hash": d[1],
+                    "IPFS CID": d[2],
+                    "Timestamp": datetime.fromtimestamp(d[3]),
+                    "Uploader": d[4],
+                    "Version": d[5],
+                    "IPFS Link": f"http://127.0.0.1:8080/ipfs/{d[2]}"
+                })
 
-        docs = contract.functions.getDocuments().call()
+            if len(records) == 0:
+                st.info("No documents stored yet")
 
-        records = []
+            else:
 
-        for d in docs:
+                df = pd.DataFrame(records)
 
-            records.append({
-                "File Name": d[0],
-                "Hash": d[1],
-                "IPFS CID": d[2],
-                "Timestamp": datetime.fromtimestamp(d[3]),
-                "Uploader": d[4],
-                "Version": d[5],
-                "IPFS Link": f"http://127.0.0.1:8080/ipfs/{d[2]}"
-            })
+                st.dataframe(df, use_container_width=True)
 
-        if len(records) == 0:
-            st.info("No documents stored yet")
+                st.write("### Open Document from IPFS")
 
-        else:
-
-            df = pd.DataFrame(records)
-
-            st.dataframe(df, use_container_width=True)
-
-            st.write("### Open Document from IPFS")
-
-            selected = st.selectbox("Select Document CID", df["IPFS CID"])
-
-            if selected:
-                st.markdown(
-                    f"[Open File](http://127.0.0.1:8080/ipfs/{selected})"
+                selected = st.selectbox(
+                    "Select Document CID",
+                    df["IPFS CID"]
                 )
+
+                if selected:
+
+                    st.markdown(
+                        f"[Open File](http://127.0.0.1:8080/ipfs/{selected})"
+                    )
+
+        except Exception as e:
+            st.error(f"Blockchain connection failed: {e}")
