@@ -1,5 +1,16 @@
 # Blockchain Legal Document Verification System
 
+A decentralized legal document verification system built using:
+
+- Ethereum Blockchain
+- Solidity Smart Contracts
+- IPFS (InterPlanetary File System)
+- Flask Backend
+- Streamlit Frontend
+- SHA-256 Cryptographic Hashing
+
+---
+
 # Project Structure
 
 ```text
@@ -36,17 +47,31 @@ blockchain-legal-doc-verification/
 
 ---
 
+# Features
+
+- Blockchain-based document verification
+- IPFS decentralized storage
+- SHA-256 integrity verification
+- Role-based authentication
+- Blockchain explorer dashboard
+- Version tracking
+- QR code generation
+- Streamlit web interface
+- Flask backend APIs
+
+---
+
 # Software Requirements
 
 Install the following software before running the project.
 
-| Software           | Purpose                    |
-| ------------------ | -------------------------- |
-| Python 3.10+       | Backend + Streamlit        |
-| Node.js (LTS)      | Hardhat + Smart Contracts  |
-| Git                | Clone repository           |
-| IPFS (Kubo)        | Decentralized file storage |
-| VS Code (Optional) | Development environment    |
+| Software | Purpose |
+|---|---|
+| Python 3.10+ | Backend + Streamlit |
+| Node.js (LTS) | Hardhat + Smart Contracts |
+| Git | Clone repository |
+| IPFS (Kubo) | Decentralized file storage |
+| VS Code (Optional) | Development environment |
 
 ---
 
@@ -54,11 +79,11 @@ Install the following software before running the project.
 
 Download Python:
 
-[https://www.python.org/downloads/](https://www.python.org/downloads/)
+https://www.python.org/downloads/
 
 While installing:
 
-* Enable "Add Python to PATH"
+- Enable **"Add Python to PATH"**
 
 Verify installation:
 
@@ -72,7 +97,7 @@ python --version
 
 Download Node.js LTS:
 
-[https://nodejs.org/](https://nodejs.org/)
+https://nodejs.org/
 
 Verify installation:
 
@@ -87,7 +112,7 @@ npm -v
 
 Download Git:
 
-[https://git-scm.com/downloads](https://git-scm.com/downloads)
+https://git-scm.com/downloads
 
 Verify installation:
 
@@ -101,13 +126,13 @@ git --version
 
 Download Kubo:
 
-[https://dist.ipfs.tech/#kubo](https://dist.ipfs.tech/#kubo)
+https://dist.ipfs.tech/#kubo
 
 ## Windows Setup
 
-1. Download Windows AMD64 ZIP.
-2. Extract ZIP.
-3. Copy extracted folder to:
+1. Download the Windows AMD64 ZIP.
+2. Extract the ZIP file.
+3. Copy the extracted folder to:
 
 ```text
 C:\ipfs
@@ -129,15 +154,21 @@ Verify installation:
 ipfs version
 ```
 
+Example output:
+
+```text
+ipfs version 0.40.1
+```
+
 ---
 
 # STEP 5 — Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/blockchain-legal-document-verification.git
+git clone https://github.com/shreybm26/blockchain-legal-document-verification.git
 ```
 
-Go inside project:
+Go inside the project:
 
 ```bash
 cd blockchain-legal-document-verification
@@ -151,7 +182,7 @@ cd blockchain-legal-document-verification
 python -m venv venv
 ```
 
-Activate virtual environment:
+Activate virtual environment.
 
 ## Windows
 
@@ -183,11 +214,11 @@ npm install
 
 This installs:
 
-* Hardhat
-* Ethers.js
-* Solidity compiler
-* Typechain
-* Blockchain dependencies
+- Hardhat
+- Ethers.js
+- Solidity compiler
+- Typechain
+- Blockchain dependencies
 
 ---
 
@@ -227,7 +258,7 @@ Open Terminal 2:
 npx hardhat node
 ```
 
-Expected:
+Expected output:
 
 ```text
 Started HTTP and WebSocket JSON-RPC server at http://127.0.0.1:8545/
@@ -260,45 +291,61 @@ Contract deployed to:
 0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
 
-Copy this contract address.
+Copy this contract address carefully.
 
 ---
 
 # STEP 14 — Update Contract Address
 
-Update BOTH files.
+After deploying the smart contract, you MUST update the contract address in 2 files.
 
 ---
 
-## backend/blockchain.py
+## File 1 — backend/blockchain.py
 
-Replace:
+Open:
+
+```text
+backend/blockchain.py
+```
+
+Find this line:
 
 ```python
 contract_address = Web3.to_checksum_address("OLD_ADDRESS")
 ```
 
-with:
+Replace it with:
 
 ```python
-contract_address = Web3.to_checksum_address("NEW_ADDRESS")
+contract_address = Web3.to_checksum_address(
+    "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+)
 ```
 
 ---
 
-## streamlit_app.py
+## File 2 — streamlit_app.py
 
-Replace:
+Open:
+
+```text
+streamlit_app.py
+```
+
+Find this line:
 
 ```python
 CONTRACT_ADDRESS = "OLD_ADDRESS"
 ```
 
-with:
+Replace it with:
 
 ```python
-CONTRACT_ADDRESS = "NEW_ADDRESS"
+CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 ```
+
+Save both files after updating.
 
 ---
 
@@ -339,41 +386,36 @@ http://localhost:8501
 
 # Login Credentials
 
-## Uploader Account
-
-```text
-Username: shrey
-Password: shrey123
-```
-
----
-
-## Lawyer / Viewer Account
+## Legal Officer Account
 
 ```text
 Username: lawyer
-Password: lawyer123
+Password: password123
 ```
+
+Permissions:
+- Upload documents
+- Verify documents
+- Access blockchain explorer
 
 ---
 
-# Features Included
+## Client Account
 
-* Blockchain-based document verification
-* IPFS decentralized storage
-* SHA-256 integrity checking
-* Role-based authentication
-* Blockchain explorer
-* Version tracking
-* QR code generation
-* Streamlit dashboard
-* Flask backend APIs
+```text
+Username: client
+Password: password256
+```
+
+Permissions:
+- Verify documents
+- Access blockchain explorer
 
 ---
 
 # Running Order Checklist
 
-Always start services in this order:
+Always start services in this order.
 
 ## 1. Start IPFS
 
@@ -381,11 +423,15 @@ Always start services in this order:
 ipfs daemon
 ```
 
+---
+
 ## 2. Start Hardhat Blockchain
 
 ```bash
 npx hardhat node
 ```
+
+---
 
 ## 3. Deploy Smart Contract
 
@@ -393,10 +439,15 @@ npx hardhat node
 npx hardhat run scripts/deploy.js --network localhost
 ```
 
+---
+
 ## 4. Update Contract Address
 
-* backend/blockchain.py
-* streamlit_app.py
+Update BOTH files:
+- backend/blockchain.py
+- streamlit_app.py
+
+---
 
 ## 5. Start Flask Backend
 
@@ -404,6 +455,8 @@ npx hardhat run scripts/deploy.js --network localhost
 cd backend
 python app.py
 ```
+
+---
 
 ## 6. Start Streamlit Frontend
 
@@ -413,9 +466,25 @@ streamlit run streamlit_app.py
 
 ---
 
+# Open the Application
+
+Frontend:
+
+```text
+http://localhost:8501
+```
+
+Backend:
+
+```text
+http://127.0.0.1:5000
+```
+
+---
+
 # Common Commands
 
-## Recompile Contracts
+## Recompile Smart Contracts
 
 ```bash
 npx hardhat compile
@@ -423,7 +492,7 @@ npx hardhat compile
 
 ---
 
-## Redeploy Contracts
+## Redeploy Smart Contract
 
 ```bash
 npx hardhat run scripts/deploy.js --network localhost
@@ -431,7 +500,7 @@ npx hardhat run scripts/deploy.js --network localhost
 
 ---
 
-## Stop Services
+## Stop Running Services
 
 Use:
 
@@ -447,13 +516,79 @@ CTRL + C
 
 Every time Hardhat node restarts:
 
-* blockchain resets
-* contract address changes
-* contracts must be redeployed
-* contract address must be updated in:
+- blockchain resets
+- contract address changes
+- contracts must be redeployed
+- contract address must be updated again
 
-  * backend/blockchain.py
-  * streamlit_app.py
+You MUST update:
+- backend/blockchain.py
+- streamlit_app.py
+
+Otherwise the application will not work correctly.
 
 ---
 
+# Troubleshooting
+
+## If IPFS command does not work
+
+Check if IPFS was added to PATH correctly.
+
+Run:
+
+```bash
+ipfs version
+```
+
+---
+
+## If Streamlit does not open
+
+Run:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+again.
+
+---
+
+## If verification fails
+
+Check:
+- IPFS daemon is running
+- Hardhat node is running
+- Smart contract was deployed
+- Contract address was updated in BOTH files
+
+---
+
+# Recommended .gitignore
+
+```gitignore
+venv/
+node_modules/
+backend/uploads/
+cache/
+__pycache__/
+*.pyc
+*.zip
+```
+
+---
+
+# Future Improvements
+
+- MetaMask integration
+- Public blockchain deployment
+- Docker deployment
+- AI-based fraud detection
+- NFT-based ownership
+- Mobile application
+- Decentralized identity integration
+
+---
+
+# End of Documentation
