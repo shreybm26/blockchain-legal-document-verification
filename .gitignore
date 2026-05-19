@@ -16,3 +16,4 @@ Thumbs.db
 # Hardhat cache
 cache/
 artifacts/build-info/
+*.zip
